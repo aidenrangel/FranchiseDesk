@@ -141,7 +141,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent)}
 .two{display:grid;gap:var(--s4);grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
 .half{display:grid;gap:var(--s4);grid-template-columns:1fr 1fr}
 @media (max-width:860px){.two,.half{grid-template-columns:1fr}}
-.stack{display:grid;gap:var(--s4)}
+.stack{display:grid;gap:var(--s4);align-content:start}
 .box{padding:var(--s4)}
 .tabs,.lgroups{display:flex;gap:var(--s1);border-bottom:1px solid var(--line);margin-bottom:var(--s4);overflow-x:auto;scrollbar-width:none}
 .tabs button,.lgroups button,.lgroups a{padding:10px 14px;border-bottom:2px solid transparent;color:var(--muted);white-space:nowrap;margin-bottom:-1px;transition:color .15s}
@@ -865,3 +865,22 @@ code{font-family:var(--mono);font-size:12px;background:var(--panel-2);padding:2p
 .lfilters .chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .uhead .rec{white-space:nowrap}
 @media (max-width:760px){.uhead b{font-size:21px}.uhead .rec{font-size:28px}}
+
+/* 1.1 */
+.wd{display:inline-flex;align-items:flex-end;gap:1px;height:22px;width:108px;vertical-align:middle}
+.wd i{flex:1;background:var(--muted);opacity:.5;border-radius:1px 1px 0 0;min-height:2px}
+.wd i.top{background:var(--accent);opacity:1}
+.nchip{display:inline-flex;gap:4px;align-items:center;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--panel-2);white-space:nowrap;margin:1px 0}
+.pbar{display:inline-block;width:64px;height:6px;border-radius:3px;background:var(--panel-3);overflow:hidden;vertical-align:middle;margin-right:4px}.pbar i{display:block;height:100%;background:var(--accent)}
+.ppick{flex:1;min-width:220px}
+.ppick .dd button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:8px 10px;border-radius:6px;color:var(--fg);font:inherit;font-size:14px}
+.ppick .dd button:hover{background:var(--panel-2)}
+.ppick .dd button .av{flex:0 0 auto}
+.award .leader .sub{white-space:normal}
+.h2h-side .ovrbig{margin-left:8px}
+.h2h-side.r .ovrbig{margin:0 8px 0 0}
+.chart .bar.W{fill:var(--win)}.chart .bar.L{fill:var(--loss)}
+.moremenu .dd{max-height:min(70vh,560px);overflow:auto}
+.cmp .r .l.pos,.cmp .r .rr.pos{font-weight:700}
+.kpi b .rk{font-size:11px;vertical-align:middle}
+@media (max-width:640px){.wd{width:72px}.pbar{width:40px}}

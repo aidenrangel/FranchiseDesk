@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="styles.css?v=1.0">
+<link rel="stylesheet" href="styles.css?v=1.1">
 </head>
 <body>
 <a class="skip" href="#view">Skip to content</a>
@@ -29,7 +29,7 @@
     <a href="#players" data-r="players">Players</a>
   </nav>
   <details class="moremenu"><summary>More ▾</summary><div class="dd">
-    <a href="#home" data-r="home">Home</a><a href="#scores" data-r="scores">Scores</a><a href="#standings" data-r="standings">Standings</a><a href="#stats" data-r="stats">Player stats</a><a href="#power" data-r="power">Power index</a><a href="#teams" data-r="teams">Teams</a><a href="#players" data-r="players">Players</a><a href="#freeagents" data-r="players">Free agents</a><a href="#data" data-r="data">Data received</a><a href="#setup" data-r="setup">Setup</a>
+    <a href="#home" data-r="home">Home</a><a href="#scores" data-r="scores">Scores</a><a href="#standings" data-r="standings">Standings</a><a href="#stats" data-r="stats">Player stats</a><a href="#power" data-r="power">Power index</a><a href="#odds" data-r="odds">Playoff odds</a><a href="#odds/race" data-r="odds">Division race</a><a href="#sos" data-r="sos">Schedule strength</a><a href="#awards" data-r="awards">Awards</a><a href="#recap" data-r="recap">Weekly recap</a><a href="#records" data-r="records">Records watch</a><a href="#accuracy" data-r="accuracy">Model accuracy</a><a href="#teams" data-r="teams">Teams</a><a href="#players" data-r="players">Players</a><a href="#rookies" data-r="players">Rookies</a><a href="#freeagents" data-r="players">Free agents</a><a href="#compare" data-r="compare">Compare players</a><a href="#transactions" data-r="transactions">Transactions</a><a href="#progression" data-r="progression">Progression</a><a href="#data" data-r="data">Data received</a><a href="#setup" data-r="setup">Setup</a>
   </div></details>
   <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="gs" placeholder="Search teams & players  ( / )" aria-label="Search" autocomplete="off"><div class="dd" id="gsdd" hidden></div></div>
   <details class="gear" id="gearMenu"><summary aria-label="Options" title="Options"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></summary>
@@ -54,7 +54,7 @@
 </main>
 <div class="toast" id="toast"></div>
 <footer>Franchise Desk reads the stats your Madden companion app exports. Not affiliated with EA Sports or the NFL. Power index is computed on this page. <span class="num" id="ver"></span></footer>
-<script src="config.js?v=1.0"></script>
-<script src="app.js?v=1.0"></script>
+<script src="config.js?v=1.1"></script>
+<script src="app.js?v=1.1"></script>
 </body>
 </html>
