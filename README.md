@@ -46,7 +46,7 @@ Open it and press **Try the demo league** to look around before the receiver exi
 
 The first time, export **all weeks** to backfill the season. After that, export the newest week after each advance.
 
-## What's on the site (v1.1)
+## What's on the site (v1.2)
 
 - Home: your teams with playoff odds and projected record, last week's results, power index, awards, latest moves, leaders and the playoff picture.
 - Scores, box scores, matchup previews for unplayed games (win chance, line, team comparison, players to watch, series history), share cards.
@@ -55,6 +55,8 @@ The first time, export **all weeks** to backfill the season. After that, export 
 - Players, rookies, draft classes, free agents, player pages with trend charts and history, player compare.
 - Player stats, weekly and season awards, weekly recap, records watch (NFL records and your league's own), power index with offense/defense ratings, model accuracy.
 - Transactions and progression: the site compares each export with the previous one it saw, so signings, cuts, trades, OVR and dev trait changes build up over time. They're stored in your browser; Setup → Export settings moves them to another device.
+
+- Real players: Madden's real players are matched to ESPN (name + birth year) for photos everywhere and a "Real NFL career" section on their page with every season before your franchise started. Fictional rookies stay as initials. Data received → Re-match ESPN photos redoes the matching.
 
 Export every week's schedule once (pick all weeks in the companion app) so the simulations use the real remaining schedule.
 

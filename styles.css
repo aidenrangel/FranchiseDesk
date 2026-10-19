@@ -884,3 +884,6 @@ code{font-family:var(--mono);font-size:12px;background:var(--panel-2);padding:2p
 .cmp .r .l.pos,.cmp .r .rr.pos{font-weight:700}
 .kpi b .rk{font-size:11px;vertical-align:middle}
 @media (max-width:640px){.wd{width:72px}.pbar{width:40px}}
+.av{position:relative;overflow:hidden}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;background:var(--panel-2)}
+.phero .av img{object-position:center 10%}

@@ -3,7 +3,7 @@
    scores, box scores, rosters, ratings, season stats and a power index from it. */
 (() => {
 'use strict';
-const VERSION = '1.1';
+const VERSION = '1.2';
 const view = document.getElementById('view'); const root = document.documentElement;
 const store = { get(k, d) { try { const v = localStorage.getItem('fd:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem('fd:' + k, JSON.stringify(v)); } catch {} } };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -35,7 +35,7 @@ const DEV = ['Normal', 'Star', 'Superstar', 'X-Factor']; const devTag = d => `<s
 const htOf = h => h ? `${Math.floor(h / 12)}'${h % 12}"` : '–';
 const money = v => { v = num(v); if (!v) return '–'; if (v >= 1e5) return '$' + (v / 1e6).toFixed(v >= 1e7 ? 1 : 2) + 'M'; if (v >= 1000) return '$' + (v / 1000).toFixed(0) + 'K'; return '$' + v; };
 const initials = p => ((p.firstName || '?')[0] + (p.lastName || '')[0]).toUpperCase();
-const avatar = (p, t, size = 36) => `<span class="av" style="--tc:${colorOf(t)};width:${size}px;height:${size}px;font-size:${size * .38}px">${esc(initials(p))}</span>`;
+const avatar = (p, t, size = 36) => `<span class="av" style="--tc:${colorOf(t)};width:${size}px;height:${size}px;font-size:${size * .38}px">${esc(initials(p))}${p && PH[p.id] ? `<img src="${headshot(PH[p.id])}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
 const POS_GROUP = { QB: 'QB', HB: 'RB', FB: 'RB', WR: 'WR', TE: 'TE', LT: 'OL', LG: 'OL', C: 'OL', RG: 'OL', RT: 'OL', LE: 'DL', RE: 'DL', DT: 'DL', LEDG: 'DL', REDG: 'DL', LOLB: 'LB', MLB: 'LB', ROLB: 'LB', SAM: 'LB', MIKE: 'LB', WILL: 'LB', CB: 'DB', FS: 'DB', SS: 'DB', K: 'K/P', P: 'K/P' };
 const POS_ORDER = ['QB', 'HB', 'FB', 'WR', 'TE', 'LT', 'LG', 'C', 'RG', 'RT', 'LE', 'LEDG', 'DT', 'RE', 'REDG', 'LOLB', 'SAM', 'MLB', 'MIKE', 'ROLB', 'WILL', 'CB', 'FS', 'SS', 'K', 'P'];
 const KEY_RATINGS = { QB: ['throwPowerRating', 'throwAccShortRating', 'throwAccMidRating', 'throwAccDeepRating', 'throwOnRunRating', 'playActionRating', 'awareRating', 'speedRating'], HB: ['speedRating', 'accelRating', 'agilityRating', 'carryRating', 'bCVRating', 'breakTackleRating', 'jukeMoveRating', 'truckRating', 'catchRating'], FB: ['runBlockRating', 'impactBlockRating', 'truckRating', 'carryRating'], WR: ['speedRating', 'accelRating', 'catchRating', 'routeRunShortRating', 'routeRunMedRating', 'routeRunDeepRating', 'releaseRating', 'cITRating', 'specCatchRating'], TE: ['catchRating', 'routeRunShortRating', 'runBlockRating', 'passBlockRating', 'cITRating', 'speedRating'], OL: ['passBlockRating', 'runBlockRating', 'impactBlockRating', 'strengthRating', 'awareRating'], DL: ['powerMovesRating', 'finesseMovesRating', 'blockShedRating', 'strengthRating', 'pursuitRating', 'tackleRating'], LB: ['tackleRating', 'pursuitRating', 'playRecRating', 'hitPowerRating', 'zoneCoverRating', 'speedRating'], DB: ['speedRating', 'manCoverRating', 'zoneCoverRating', 'pressRating', 'playRecRating', 'catchRating'], 'K/P': ['kickPowerRating', 'kickAccRating'] };
@@ -62,7 +62,7 @@ async function loadLeague(force, onProgress) {
       const one = async k => { const c = force ? null : await idb.get(k.key); let v; if (c && c.t === k.t) v = c.v; else { v = await getJSON(API + '/api/get?key=' + encodeURIComponent(k.key)); idb.set(k.key, { t: k.t, v }); } pieces.push({ ...k, v }); };
       for (let i = 0; i < keys.length; i += 10) { await Promise.all(keys.slice(i, i + 10).map(k => one(k).catch(e => console.warn('piece failed', k.key, e)))); done += Math.min(10, keys.length - i); onProgress?.(done / keys.length); }
     }
-    L = assemble(pieces); L.leagues = lids; L.lid = lid; L.loadedAt = Date.now(); try { await trackHistory(); } catch (e) { console.warn('history', e); L.hist = { events: [], ovr: {}, first: true }; } return L;
+    L = assemble(pieces); L.leagues = lids; L.lid = lid; L.loadedAt = Date.now(); try { await trackHistory(); } catch (e) { console.warn('history', e); L.hist = { events: [], ovr: {}, first: true }; } onProgress?.(1, 'Matching players to ESPN'); try { await linkEspn(); } catch (e) { console.warn('espn', e); } return L;
   })(); try { return await loading; } finally { loading = null; }
 }
 const stageOf = path => (String(path || '').match(/week\/(pre|reg|post)/) || [])[1] || 'reg';
@@ -345,9 +345,10 @@ async function player(id) {
       <div class="bio"><span>Age <b>${esc(pl.age ?? '–')}</b></span><span>HT <b>${htOf(num(pl.height))}</b></span><span>WT <b>${esc(pl.weight ?? '–')}</b></span><span>College <b>${esc(pl.college || '–')}</b></span><span>Exp <b>${num(pl.yearsPro) ? num(pl.yearsPro) + ' yrs' : 'Rookie'}</b></span><span>Dev ${devTag(pl.dev)}</span>${num(pl.injuryLength) ? `<span><span class="tag out">Injured · ${num(pl.injuryLength)} wk</span></span>` : ''}${draftOf(pl) ? `<span>Draft <b>${esc(draftOf(pl))}${num(pl.rookieYear) ? ' (' + num(pl.rookieYear) + ')' : ''}</b></span>` : ''}</div>
       <div class="row" style="margin-top:10px;gap:8px"><a class="chip" href="#compare/${esc(id)}">Compare</a><button class="chip" id="pshare">Share card</button></div>
     </div></div>
-    <div class="two"><div class="stack">${trend}${career || '<div class="panel"><div class="empty">No stats exported for this player yet.</div></div>'}</div>
+    <div class="two"><div class="stack">${trend}${career || '<div class="panel"><div class="empty">No stats exported for this player yet.</div></div>'}<div id="nfl" class="stack">${PH[id] || !DEMO ? '<div class="panel"><div class="empty">Looking up the real NFL career…</div></div>' : ''}</div></div>
       <div class="stack">${num(pl.contractSalary) || num(pl.contractYearsLeft) ? `<div class="panel"><h3>Contract</h3><div class="kpis"><div class="kpi"><small>Salary / yr</small><b>${money(perYear(pl))}</b></div><div class="kpi"><small>Total value</small><b>${money(num(pl.contractSalary) + num(pl.contractBonus))}</b></div><div class="kpi"><small>Cap hit</small><b>${money(capOf(pl))}</b></div><div class="kpi"><small>Years left</small><b>${esc(pl.contractYearsLeft ?? '–')}${pl.contractLength ? ' of ' + esc(pl.contractLength) : ''}</b></div></div></div>` : ''}
         ${ratingKeys.length ? `<div class="panel"><h3>Ratings<span class="pill">${ratingKeys.length}</span></h3>${keyR.length ? `<div class="lhead" style="grid-template-columns:1fr"><span>Key for ${esc(pl.pos)}</span></div><div class="rts">${keyR.map(bar).join('')}</div>` : ''}<div class="lhead" style="grid-template-columns:1fr"><span>All ratings</span></div><div class="rts">${rest.map(bar).join('')}</div></div>` : ''}${histPanel}</div></div>`;
+  if (!DEMO) playerNFL(pl, document.getElementById('nfl')).catch(e => { console.warn(e); document.getElementById('nfl').innerHTML = ''; });
   document.getElementById('pshare').onclick = () => shareCard({ title: pl.name, sub: `${pl.pos} · ${pl.tid ? t.name : 'Free agent'} · ${seasonLabel(si)}`, big: String(pl.ovr || ''), lines: [seasonLine, `Age ${pl.age ?? '–'} · ${num(pl.yearsPro) ? num(pl.yearsPro) + ' yrs' : 'Rookie'} · ${DEV[pl.dev] || 'Normal'} dev`].filter(Boolean), color: colorOf(pl.tid ? t : null), abbr: pl.tid ? t.abbr : 'FA' });
   wire();
 }
@@ -368,11 +369,13 @@ async function data() {
   const rosterN = (by.roster || []).filter(p => !/freeagents/.test(p.path)).length, faN = (by.roster || []).some(p => /freeagents/.test(p.path));
   const wk = kind => [...new Set((by[kind] || []).map(p => (p.path.match(/week\/(pre|reg|post)\/(\d+)/) || []).slice(1).join(' ')).filter(Boolean))];
   const check = (ok, label, detail) => `<div class="chk ${ok ? 'ok' : ''}"><span>${ok ? '✓' : '–'}</span><b>${label}</b><small>${detail}</small></div>`;
-  view.innerHTML = `<div class="bar"><div><h1>Data received</h1><h2>${L.pieces.length} pieces${DEMO ? ' (demo league)' : ` · league ${esc(L.lid)}`} · last export ${esc(ago(L.updated))}</h2></div><div class="row"><button class="chip" id="reload">Reload everything</button><a class="chip" href="#setup">Setup</a></div></div>
+  view.innerHTML = `<div class="bar"><div><h1>Data received</h1><h2>${L.pieces.length} pieces${DEMO ? ' (demo league)' : ` · league ${esc(L.lid)}`} · last export ${esc(ago(L.updated))}</h2></div><div class="row"><button class="chip" id="reload">Reload everything</button><button class="chip" id="rematch">Re-match ESPN photos</button><a class="chip" href="#setup">Setup</a></div></div>
+    ${DEMO ? '' : `<div class="panel" style="margin-bottom:var(--s4)"><div class="box"><b>${espnMatched()}</b> of ${Object.keys(L.players).length} players matched to real ESPN players for photos and pre-franchise NFL careers. Fictional draft classes and generated players stay unmatched.</div></div>`}
     <div class="panel"><h3>Checklist</h3><div class="chks">${check(!!by.teams, 'League info', by.teams ? `${Object.keys(L.teams).length} teams` : 'Tick League Info in the export')}${check(!!by.standings, 'Standings', by.standings ? 'received' : 'Comes with League Info')}${check(rosterN >= 32, 'Rosters', `${rosterN} of 32 teams${faN ? ' + free agents' : ''}`)}${check(!!by.schedule, 'Schedules', wk('schedule').join(', ') || 'Export a week')}${check(['passing', 'rushing', 'receiving', 'defense'].every(k => by[k]), 'Weekly stats', wk('passing').join(', ') || 'Export a week with stats ticked')}</div></div>
     <div class="panel"><h3>Every piece<span class="pill">click to view the raw JSON</span></h3><div class="tw"><table><thead><tr><th>Type</th><th>Path the app sent</th><th class="num">Items</th><th>Updated</th></tr></thead><tbody>${L.pieces.sort((a, b) => String(a.path).localeCompare(String(b.path), undefined, { numeric: true })).map((p, i) => `<tr class="clk" data-raw="${i}"><td>${esc(KIND_LABEL[p.kind] || p.kind || '?')}</td><td class="muted" style="font-family:var(--mono);font-size:12px">${esc(p.path)}</td><td class="num">${esc(p.n ?? '')}</td><td class="muted">${p.t ? esc(ago(p.t)) : ''}</td></tr>`).join('')}</tbody></table></div></div>
     <div class="panel" id="rawp" hidden><h3 id="rawh"></h3><pre id="raw" class="raw"></pre></div>`;
   document.getElementById('reload').onclick = async () => { await idb.clear(); L = null; toast('Reloading from the receiver…'); route(); };
+  document.getElementById('rematch').onclick = async () => { await idb.set('espn:map:' + L.lid, {}); await idb.set('espn:rosters', null); Object.keys(PH).forEach(k => delete PH[k]); toast('Matching players to ESPN…'); try { await linkEspn(); } catch {} route(); };
   view.querySelectorAll('[data-raw]').forEach(tr => tr.onclick = async () => { const p = L.pieces[Number(tr.dataset.raw)]; let v; if (DEMO) v = window.makeDemoLeague().find(x => x.key === p.key)?.v; else { const c = await idb.get(p.key); v = c?.v ?? await getJSON(API + '/api/get?key=' + encodeURIComponent(p.key)).catch(e => ({ error: e.message })); }
     const s = JSON.stringify(v, null, 2); document.getElementById('rawp').hidden = false; document.getElementById('rawh').textContent = p.path; document.getElementById('raw').textContent = s.length > 150000 ? s.slice(0, 150000) + '\n… (truncated)' : s; document.getElementById('rawp').scrollIntoView({ behavior: 'smooth' }); });
 }
@@ -723,6 +726,52 @@ async function importSettings(file) {
   API = String(store.get('api', '') || window.FRANCHISE_API || '').trim().replace(/\/+$/, ''); DEMO = store.get('demo', false); if (store.get('theme', null)) root.dataset.theme = store.get('theme'); L = null; toast('Settings imported'); location.hash = 'home'; route();
 }
 
+/* ---------- v1.2 · real players: ESPN photos and pre-franchise NFL careers ----------
+   Madden's real players are matched to ESPN athletes by name + birth year (then name + position, then unique name).
+   Matches are cached in this browser; the ESPN rosters are refreshed weekly. Fictional players simply stay unmatched. */
+const ESPN_SITE = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl', ESPN_WEB = 'https://site.web.api.espn.com/apis/common/v3/sports/football/nfl';
+const ESPN_TEAM_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 33, 34];
+const ESPN_GRP = { QB: 'QB', RB: 'RB', FB: 'RB', HB: 'RB', WR: 'WR', TE: 'TE', OT: 'OL', T: 'OL', G: 'OL', OG: 'OL', C: 'OL', OL: 'OL', DE: 'DL', DT: 'DL', NT: 'DL', DL: 'DL', EDGE: 'DL', LB: 'LB', OLB: 'LB', ILB: 'LB', MLB: 'LB', CB: 'DB', S: 'DB', FS: 'DB', SS: 'DB', DB: 'DB', K: 'K/P', P: 'K/P', PK: 'K/P', LS: 'K/P' };
+const PH = {}; // rosterId → ESPN athlete id
+const headshot = eid => `https://a.espncdn.com/i/headshots/nfl/players/full/${eid}.png`;
+const nkey = (f, l) => `${f || ''} ${l || ''}`.toLowerCase().replace(/\b(jr|sr|ii|iii|iv|v)\b\.?/g, '').replace(/[^a-z]/g, '');
+async function espnRosters(force) {
+  const c = await idb.get('espn:rosters'); if (c && !force && Date.now() - c.t < 7 * 86400000) return c.list;
+  const list = []; for (let i = 0; i < ESPN_TEAM_IDS.length; i += 8) await Promise.all(ESPN_TEAM_IDS.slice(i, i + 8).map(async tid => { try { const d = await getJSON(`${ESPN_SITE}/teams/${tid}/roster`); (d.athletes || []).forEach(g => (g.items || []).forEach(a => list.push({ id: a.id, f: a.firstName, l: a.lastName, by: a.dateOfBirth ? Number(a.dateOfBirth.slice(0, 4)) : 0, pos: a.position?.abbreviation || '', col: a.college?.name || '' }))); } catch (e) { console.warn('espn roster', tid, e.message); } }));
+  if (list.length > 500) await idb.set('espn:rosters', { t: Date.now(), list }); return list;
+}
+async function linkEspn() {
+  if (DEMO) return; const key = 'espn:map:' + L.lid; const map = (await idb.get(key)) || {}; const players = Object.values(L.players); const missing = players.filter(p => map[p.id] === undefined);
+  if (missing.length) { let list = []; try { list = await espnRosters(); } catch (e) { console.warn('espn', e.message); }
+    if (list.length) { const byBirth = {}, byPos = {}, byName = {}; list.forEach(a => { const k = nkey(a.f, a.l); (byBirth[k + '|' + a.by] ||= []).push(a); (byPos[k + '|' + (ESPN_GRP[a.pos] || a.pos)] ||= []).push(a); (byName[k] ||= []).push(a); });
+      missing.forEach(p => { const k = nkey(p.firstName, p.lastName); const c = byBirth[k + '|' + num(p.birthYear)] || byPos[k + '|' + p.grp] || byName[k] || []; map[p.id] = c.length === 1 ? Number(c[0].id) : c.length > 1 ? Number((c.find(a => a.col && p.college && a.col.toLowerCase() === String(p.college).toLowerCase()) || c[0]).id) : 0; });
+      await idb.set(key, map); } }
+  Object.entries(map).forEach(([rid, eid]) => { if (eid) PH[rid] = eid; });
+}
+const espnMatched = () => Object.keys(PH).length;
+async function espnSearch(p) { // fallback for players who aren't on a current ESPN roster
+  try { const d = await getJSON(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(p.name)}&limit=8`); const hits = (d.results || []).flatMap(r => r.contents || []).filter(c => c.type === 'player' && /nfl/i.test(c.defaultLeagueSlug || c.sport || 'nfl') && nkey(...c.displayName.split(/ (.+)/)) === nkey(p.firstName, p.lastName)); const h = hits[0]; if (!h) return 0; const eid = Number((h.uid || '').split('a:')[1] || h.id); if (eid) { PH[p.id] = eid; const key = 'espn:map:' + L.lid; const map = (await idb.get(key)) || {}; map[p.id] = eid; await idb.set(key, map); } return eid; } catch { return 0; }
+}
+/* ESPN career tables, pre-franchise seasons only */
+function espnCareerHTML(career, before) {
+  const cats = (career?.categories || []).filter(c => c.statistics?.length).map(c => ({ ...c, statistics: c.statistics.filter(r => !before || num(r.season?.year) < before) })).filter(c => c.statistics.length);
+  if (!cats.length) return '';
+  const teamName = (career, slug) => career.teams?.[slug]?.displayName || (slug || '').split('-').map(w => w[0]?.toUpperCase() + w.slice(1)).join(' ');
+  return cats.map(c => { const rows = [...c.statistics].sort((x, y) => num(x.season.year) - num(y.season.year)); const ki = Math.max(0, c.names.findIndex(n => /yards|tackles|sacks|interceptions|fieldGoalsMade|receptions|touchdowns/i.test(n) && !/perGame|avg|long/i.test(n))); const best = rows.reduce((b, r) => num(r.stats[ki]) > num(b.stats[ki]) ? r : b, rows[0]);
+    const totals = c.totals && !before ? c.totals : null;
+    return `<div class="panel"><h3>${esc(c.displayName)} · NFL<span class="pill">${rows.length} season${rows.length > 1 ? 's' : ''}${rows.length > 1 ? ` · best ${esc(c.labels[ki])}: ${esc(best.stats[ki])} (${best.season.year})` : ''}</span></h3>
+      ${rows.length > 2 ? lineChart([{ pts: rows.map(r => num(String(r.stats[ki]).replace(/,/g, ''))), cls: 'lA', color: 'var(--accent)' }], rows.map(r => String(r.season.year).slice(2)), { h: 110, min: 0 }) : ''}
+      <div class="tw"><table class="stats"><thead><tr><th>Season</th><th>Team</th>${c.labels.map(l => `<th class="num">${esc(l)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr class="${r === best && rows.length > 1 ? 'hl' : ''}"><td>${r.season.year}</td><td class="muted">${esc(teamName(career, r.teamSlug))}</td>${r.stats.map((v, i) => `<td class="num ${i === ki && r === best && rows.length > 1 ? 'pos' : ''}">${esc(v)}</td>`).join('')}</tr>`).join('')}${totals ? `<tr style="font-weight:600"><td colspan="2">NFL career</td>${totals.map(v => `<td class="num">${esc(v)}</td>`).join('')}</tr>` : ''}</tbody></table></div></div>`; }).join('');
+}
+async function playerNFL(p, el) {
+  let eid = PH[p.id]; if (!eid) eid = await espnSearch(p); if (!eid) { el.innerHTML = ''; return; }
+  const [bio, career] = await Promise.all([getJSON(`${ESPN_WEB}/athletes/${eid}`).catch(() => null), getJSON(`${ESPN_WEB}/athletes/${eid}/stats`).catch(() => null)]);
+  const a = bio?.athlete; const before = L.baseYear || null; const html = espnCareerHTML(career, before);
+  const facts = a ? [a.draft?.displayText ? ['Drafted', a.draft.displayText] : null, a.debutYear ? ['NFL debut', a.debutYear] : null, a.college?.name ? ['College', a.college.name] : null, a.birthPlace?.city ? ['From', [a.birthPlace.city, a.birthPlace.state].filter(Boolean).join(', ')] : null, a.experience?.years != null ? ['Real experience', a.experience.years + ' yrs'] : null].filter(Boolean) : [];
+  el.innerHTML = `<div class="panel"><h3>Real NFL career<span class="pill">${before ? 'through ' + (before - 1) : 'from ESPN'}${a?.displayName && nkey(a.firstName, a.lastName) !== nkey(p.firstName, p.lastName) ? ' · matched to ' + esc(a.displayName) : ''}</span></h3>${facts.length ? `<div class="kpis">${facts.map(([k, v]) => `<div class="kpi"><small>${esc(k)}</small><b style="font-size:17px">${esc(v)}</b></div>`).join('')}</div>` : ''}${html ? '' : '<div class="empty">No NFL statistics before the franchise started.</div>'}</div>${html}`;
+  const img = document.querySelector('.phero .av'); if (img && !img.querySelector('img')) img.insertAdjacentHTML('beforeend', `<img src="${headshot(eid)}" alt="" onerror="this.remove()">`);
+}
+
 /* ---------- search, gear, routing ---------- */
 const gs = document.getElementById('gs'), gsdd = document.getElementById('gsdd');
 gs.oninput = () => { const q = gs.value.trim().toLowerCase(); if (!L || q.length < 2) { gsdd.hidden = true; return; } const ts = Object.values(L.teams).filter(t => (t.name + ' ' + t.abbr + ' ' + t.user).toLowerCase().includes(q)).slice(0, 4); const ps = Object.values(L.players).filter(p => p.name.toLowerCase().includes(q)).sort((a, b) => b.ovr - a.ovr).slice(0, 8);
@@ -750,7 +799,7 @@ async function route() {
   document.querySelector('.moremenu')?.removeAttribute('open'); document.getElementById('gearMenu')?.removeAttribute('open'); window.scrollTo(0, 0);
   if (page === 'setup') { await setup(); return; }
   if (!L) view.innerHTML = `<div class="bar"><div><h1>Loading your league…</h1><h2>${DEMO ? 'Building the demo league' : 'Reading exports from the receiver'}</h2></div></div><div class="prog"><i id="lprog" style="width:0"></i></div>${skel()}`;
-  try { await loadLeague(false, p => { const el = document.getElementById('lprog'); if (el) el.style.width = p * 100 + '%'; }); }
+  try { await loadLeague(false, (p, label) => { const el = document.getElementById('lprog'); if (el) el.style.width = p * 100 + '%'; if (label) { const h = view.querySelector('.bar h2'); if (h) h.textContent = label + '…'; } }); }
   catch (e) { if (e.code === 'NO_API') return setup('Add your receiver URL to get started, or try the demo league.'); if (e.code === 'EMPTY') return setup('The receiver is connected but empty. Export from the companion app (step 2), then reload.'); view.innerHTML = fail(e); return; }
   fillGear(); document.getElementById('demoBadge').hidden = !DEMO;
   try { await PAGES[page](a, b); } catch (e) { console.error(e); view.innerHTML = fail(e); }
